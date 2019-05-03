@@ -252,6 +252,10 @@ ___________________________
     out3=0;
     out4=0;
 
+
+    Matrix.Multiply((float*)A, (float*)x_k, n, n, 1, (float*)Ax_k);    
+    Matrix.Multiply((float*)B, (float*)u_k, n, 1, 1, (float*)Bu_k);    
+
     // reset all your x_k values
     float error = x_k[3][0] - y_ref[0][0];
     for (int i = 0; i < n; ++i)
@@ -259,18 +263,14 @@ ___________________________
       x_k[i][0] = 0;
       L_error[i][0] = L[i][0]*error;
     }
+    
+    //x_hat_k1=A*x_hat_k+B*u_k+L*(y_k-y_hat_k);
 
-    Matrix.Multiply((float*)A, (float*)x_k, n, n, 1, (float*)Ax_k);    
-    Matrix.Multiply((float*)B, (float*)u_k, n, 1, 1, (float*)Bu_k);    
-    Matrix.Multiply((float*)F, (float*)x_k, m, n, 1, (float*)Fx_k);    
-
-    Matrix.Add((float*)Fx_k, (float*)r, m,  1, (float*)u_k);
     Matrix.Add((float*)Ax_k, (float*)x_k, n,  1, (float*)x_k);
     Matrix.Add((float*)Bu_k, (float*)x_k, n,  1, (float*)x_k);
     Matrix.Add((float*)L_error, (float*)x_k, n,  1, (float*)x_k);
 
 
-    //x_hat_k1=A*x_hat_k+B*u_k+L*(y_k-y_hat_k);
 
 
 
