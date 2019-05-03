@@ -72,8 +72,11 @@ float Fx_k[m][1];   //Intermediate vector F·x(k)
 float y_ref[p][1];  //Output Reference y*
 
 // Observer
+float Ax_k_hat[n][1];
 float L[n][1];      //Designed offline
 float L_error[n][1];      //Designed offline
+float Fx_k_hat[m][1];   //Intermediate vector F·x(k)
+float x_k_hat[n][1];
 
 
 //Inputs
@@ -119,7 +122,10 @@ void setup()
     C[0][0]=0;  C[0][1]=0; C[0][2]=0; C[0][3]=-0.0151;
     
     F[0][0]=1.0418;  F[0][1]=3.7955;  F[0][2]=1.9911;  F[0][3]=0.3896;
-     
+    
+    Fx_k[0][0] = 0;
+    Fx_k_hat[0][0] = 0;
+    
     M[0][0]=0;
 
     L[0][0] = -10.3078;
@@ -131,10 +137,12 @@ void setup()
 
     for (int i = 0; i < n; ++i)
     {
-        x_k[0][i]=0;
+        x_k[i][0]=0;
+        x_k_hat[i][0]=0;
     }
     
-    x_k[0][3]=0.0001;
+    x_k[m-1][0]=0.001;
+    x_k_hat[m-1][0]=0.002;
 
     
   //Initialize I/O pins to measure execution time
@@ -180,7 +188,7 @@ void Controller(void) {
  */
 
   //Start measuring execution time
-  digitalWrite(A3,HIGH);  
+  //digitalWrite(A3,HIGH);  
 
   if (count==300)
     y_ref[0][0] -= 0.04;
@@ -221,54 +229,48 @@ State Feedback Controller
 ___________________________
 */
 
-    //read_calibrated_1();
-    //read_calibrated_2();
-    //read_calibrated_3();
-    //read_calibrated_4();
-    //write_out_calibrated_1(outval);
-    //write_out_calibrated_2(outval);
-    //write_out_calibrated_3(outval);
-    //write_out_calibrated_4(outval);
+
     // States Measurement
     x_k[3][0]=read_calibrated_1() - REFERENCE_OFFSET; //x1(k)
 
     
-    //r=M·y_ref
+    /*   Calculates the reference input for the system. As A is not
+     *   invertible we cannot use M. Additionally all values of the reference
+     *   vector are 0 excluding our desired position.
+     */
+     
     r[0][0] = F[0][3]*y_ref[0][0];
-    //Matrix.Multiply((float*)M, (float*)y_ref, m, p, 1, (float*)r);
 
-    //F·x(k);
-    Matrix.Multiply((float*)F, (float*)x_k, m, n, 1, (float*)Fx_k);    
+    // u(k)=r-Fx_k_hat
+    Matrix.Multiply((float*)F, (float*)x_k_hat, m, n, 1, (float*)Fx_k_hat);    
+    Matrix.Subtract((float*)r, (float*)Fx_k_hat, m,  1, (float*)u_k);
     
-    //   u(k)=-F·x(k)+r 
-    //or u(k)=r-F·x(k)
-
-    Matrix.Subtract((float*)r, (float*)Fx_k, m,  1, (float*)u_k);
-    
-
-    //Finally, assign each controller output to one board output
-    out1=-u_k[0][0];
-    out2=REFERENCE_OFFSET;//x_k[3][0]; // reference
-    out3=0;
-    out4=0;
+    out1 = u_k[0][0];
+    out2 = REFERENCE_OFFSET;
+    out3 = 0;
+    out4 = 0;
 
 
     Matrix.Multiply((float*)A, (float*)x_k, n, n, 1, (float*)Ax_k);    
     Matrix.Multiply((float*)B, (float*)u_k, n, 1, 1, (float*)Bu_k);    
 
-    // reset all your x_k values
-    float error = x_k[3][0] - y_ref[0][0];
+    /*   Calculate the observer error 
+     */
+     
+    float y_hat = C[3][0]*x_k_hat[3][0];
+    float error = x_k[3][0] - y_hat;
+    
     for (int i = 0; i < n; ++i)
     {
-      x_k[i][0] = 0;
+      x_k_hat[i][0] = 0;
       L_error[i][0] = L[i][0]*error;
     }
     
     //x_hat_k1=A*x_hat_k+B*u_k+L*(y_k-y_hat_k);
 
-    Matrix.Add((float*)Ax_k, (float*)x_k, n,  1, (float*)x_k);
-    Matrix.Add((float*)Bu_k, (float*)x_k, n,  1, (float*)x_k);
-    Matrix.Add((float*)L_error, (float*)x_k, n,  1, (float*)x_k);
+    Matrix.Add((float*)Ax_k_hat, (float*)x_k_hat, n,  1, (float*)x_k_hat);
+    Matrix.Add((float*)Bu_k, (float*)x_k_hat, n,  1, (float*)x_k_hat);
+    Matrix.Add((float*)L_error, (float*)x_k_hat, n,  1, (float*)x_k_hat);
 
 
 
@@ -300,7 +302,7 @@ ______________________
 //Do not display them when running the controller   
 
   //Stop measuring calculation time
-  digitalWrite(A3,LOW);   
+  //digitalWrite(A3,LOW);   
 }
 
 
