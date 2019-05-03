@@ -34,7 +34,7 @@
  ******************************
  Definitions (constant parameters) and Variales
  */ 
-
+#define REFERENCE_OFFSET 0.765f
 
 //Discrete-Time LTI System To Be Controlled                              \
   x(k+1)=A·x(k)+B·u(k)                    \
@@ -42,7 +42,7 @@
                                             \
   where, x \in R^n, u \in R^m, y \in R^p    \
 
-#define fs 100  // Sampling frequency [Hz]
+#define fs 50  // Sampling frequency [Hz]
                 // Sampling Time, Ts=1/fs [s]
 
 //Number of States, Inputs, and Outputs
@@ -106,7 +106,7 @@ void setup()
     y_ref[0][0]=0;
     
   //Initialize matrices  
-    A[0][0]=0.9577;     A[0][1]=0.0000;    A[0][2]=0.0000;    A[0][3]=0.0000; 
+    A[0][0]=0.9577;     A[0][1]=0.0000;     A[0][2]=0.0000;     A[0][3]=0.0000; 
     A[1][0]=0.0196;     A[1][1]=1.0000;     A[1][2]=0.0000;    A[1][3]=0.0000; 
     A[2][0]=0.0002;     A[2][1]=0.0200;     A[2][2]=1.0000;    A[2][3]=0.0000; 
     A[3][0]=0.0000;     A[3][1]=0.0002;     A[3][2]=0.0200;    A[3][3]=1.0000; 
@@ -118,14 +118,14 @@ void setup()
   
     C[0][0]=0;  C[0][1]=0; C[0][2]=0; C[0][3]=-0.0151;
     
-    F[0][0]=15.8584;  F[0][1]=120.9189;  F[0][2]=338.7070;  F[0][3]=321.885;
+    F[0][0]=1.0418;  F[0][1]=3.7955;  F[0][2]=1.9911;  F[0][3]=0.3896;
      
     M[0][0]=0;
 
-    L[0][0] =-7.3416*powf(10.0, 4.0);
-    L[0][0] =-2.4237*powf(10.0, 4.0);
-    L[0][0] =-0.2267*powf(10.0, 4.0);
-    L[0][0] =-0.0098*powf(10.0, 4.0);
+    L[0][0] = -10.3078;
+    L[0][0] = -126.8183;
+    L[0][0] = -78.3007;
+    L[0][0] = -17.5824;
     
     u_k[0][0]=0;
 
@@ -230,7 +230,7 @@ ___________________________
     //write_out_calibrated_3(outval);
     //write_out_calibrated_4(outval);
     // States Measurement
-    x_k[3][0]=read_calibrated_1() - 0.813; //x1(k)
+    x_k[3][0]=read_calibrated_1() - REFERENCE_OFFSET; //x1(k)
 
     
     //r=M·y_ref
@@ -248,7 +248,7 @@ ___________________________
 
     //Finally, assign each controller output to one board output
     out1=-u_k[0][0];
-    out2=0;//x_k[3][0]; // reference
+    out2=REFERENCE_OFFSET;//x_k[3][0]; // reference
     out3=0;
     out4=0;
 
@@ -567,7 +567,7 @@ float saturate(float saturation_limit, float value)
 
 void write_out_calibrated_1(float value)
 {
-    float saturation_limit = 7.00;
+    float saturation_limit = 9.00;
     float output = saturate(saturation_limit, calibrate(value, 0.9945, -0.0525));
 
     write_out1(output,  0,  1, 0);
