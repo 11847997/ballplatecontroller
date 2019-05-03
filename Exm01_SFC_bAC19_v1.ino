@@ -141,8 +141,8 @@ void setup()
         x_k_hat[i][0]=0;
     }
     
-    x_k[m-1][0]=0.001;
-    x_k_hat[m-1][0]=0.002;
+    x_k[n-1][0]=0.001;
+    x_k_hat[n-1][0]=0.002;
 
     
   //Initialize I/O pins to measure execution time
@@ -231,7 +231,7 @@ ___________________________
 
 
     // States Measurement
-    x_k[3][0]=read_calibrated_1() - REFERENCE_OFFSET; //x1(k)
+    x_k[n-1][0]=read_calibrated_1() - REFERENCE_OFFSET; //x1(k)
 
     
     /*   Calculates the reference input for the system. As A is not
@@ -239,7 +239,7 @@ ___________________________
      *   vector are 0 excluding our desired position.
      */
      
-    r[0][0] = F[0][3]*y_ref[0][0];
+    r[0][0] = F[0][n-1]*y_ref[0][0];
 
     // u(k)=r-Fx_k_hat
     Matrix.Multiply((float*)F, (float*)x_k_hat, m, n, 1, (float*)Fx_k_hat);    
@@ -251,14 +251,18 @@ ___________________________
     out4 = 0;
 
 
+
+    /*   Next State calculations
+     */
+     
     Matrix.Multiply((float*)A, (float*)x_k, n, n, 1, (float*)Ax_k);    
     Matrix.Multiply((float*)B, (float*)u_k, n, 1, 1, (float*)Bu_k);    
 
     /*   Calculate the observer error 
      */
      
-    float y_hat = C[3][0]*x_k_hat[3][0];
-    float error = x_k[3][0] - y_hat;
+    float y_hat = C[n-1][0]*x_k_hat[n-1][0];
+    float error = x_k[n-1][0] - y_hat;
     
     for (int i = 0; i < n; ++i)
     {
@@ -297,6 +301,7 @@ ______________________
     write_out_calibrated_2(out2);
     write_out_calibrated_3(out3);
     write_out_calibrated_4(out4);
+    
     //disp_outputs_all();
 //Only display outputs for calibration. 
 //Do not display them when running the controller   
