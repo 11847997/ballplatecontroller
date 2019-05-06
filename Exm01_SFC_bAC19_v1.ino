@@ -34,7 +34,7 @@
  ******************************
  Definitions (constant parameters) and Variales
  */
-#define REFERENCE_OFFSET 0.695f
+#define REFERENCE_OFFSET 0.712f
 
 //Discrete-Time LTI System To Be Controlled                              \
   x(k+1)=A·x(k)+B·u(k)                    \
@@ -46,7 +46,7 @@
                 // Sampling Time, Ts=1/fs [s]
 
 //Number of States, Inputs, and Outputs
-#define n 4   //number of states
+#define n 5   //number of states
 #define m 1   //number of inputs
 #define p 1   //number of outputs
 
@@ -109,7 +109,7 @@ void setup()
     y_ref[0][0]=0;
 
   //Initialize matrices
-    A[0][0]=0.9577;     A[0][1]=0.0000;     A[0][2]=0.0000;     A[0][3]=0.0000;
+    A[0][0]=0.9577;     A[0][1]=0.0000;     A[0][2]=0.0000;    A[0][3]=0.0000;
     A[1][0]=0.0196;     A[1][1]=1.0000;     A[1][2]=0.0000;    A[1][3]=0.0000;
     A[2][0]=0.0002;     A[2][1]=0.0200;     A[2][2]=1.0000;    A[2][3]=0.0000;
     A[3][0]=0.0000;     A[3][1]=0.0002;     A[3][2]=0.0200;    A[3][3]=1.0000;
@@ -121,17 +121,21 @@ void setup()
 
     C[0][0]=0;  C[0][1]=0; C[0][2]=0; C[0][3]=-0.0151;
 
-    F[0][0]=1.0418;  F[0][1]=3.7955;  F[0][2]=1.9911;  F[0][3]=0.3896;
+    F[0][0]=-0.5445;  F[0][1]=0.9616;  F[0][2]=0.2526;  F[0][3]=0.0247;
 
     Fx_k[0][0] = 0;
     Fx_k_hat[0][0] = 0;
 
     M[0][0]=0;
 
-    L[0][0] = -10.3078;
-    L[0][0] = -126.8183;
-    L[0][0] = -78.3007;
-    L[0][0] = -17.5824;
+
+    /// ERROROR HERERE
+
+    
+    L[0][0] = 0.0015;
+    L[1][0] = -8.9024;
+    L[2][0] = -14.2266;
+    L[3][0] = -7.5942;
 
     u_k[0][0]=0;
 
@@ -191,13 +195,13 @@ void Controller(void) {
   //digitalWrite(A3,HIGH);
 
   if (count==300)
-    y_ref[0][0] -= 0.004;
+    y_ref[0][0] -= 0;
 
   count++;
   if(count==600)
   {
     count=0;
-    y_ref[0][0] += 0.004;
+    y_ref[0][0] += 0;
   }
 
 /*
@@ -245,6 +249,8 @@ ___________________________
     Matrix.Multiply((float*)F, (float*)x_k_hat, m, n, 1, (float*)Fx_k_hat);
     Matrix.Subtract((float*)r, (float*)Fx_k_hat, m,  1, (float*)u_k);
 
+    u_k[0][0] = saturate(u_k[0][0], 9.00);
+    
     out1 = -u_k[0][0];
     out2 = REFERENCE_OFFSET;
     out3 = 0;
@@ -574,7 +580,7 @@ float saturate(float saturation_limit, float value)
 
 void write_out_calibrated_1(float value)
 {
-    float saturation_limit = 8.0;
+    float saturation_limit = 9.0;
     float output = saturate(saturation_limit, calibrate(value, 0.9945, -0.0525));
 
     write_out1(output,  0,  1, 0);
